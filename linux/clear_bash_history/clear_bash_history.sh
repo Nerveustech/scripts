@@ -24,12 +24,42 @@
 # SOFTWARE.
 #
 
+RED_COLOR="\033[0;31m"
 YELLOW_COLOR="\033[0;33m"
+GREEN_COLOR="\033[0;32m"
 RESET_COLOR="\033[0m"
 
-echo -e "${YELLOW_COLOR}Adding clear bash instruction on bash_logout.${RESET_COLOR}"
-echo -e "\ncat /dev/null > ~/.bash_history && history -c && exit" >> ~/.bash_logout
-echo -e "${YELLOW_COLOR}All done.${RESET_COLOR}"
-unset YELLOW_COLOR
-unset RESET_COLOR
-exit 0
+cleanup() {
+	unset RED_COLOR
+	unset YELLOW_COLOR
+	unset GREEN_COLOR
+	unset RESET_COLOR
+    unset -f cleanup
+}
+
+case $1 in
+    "install")
+        if grep -wq "cat /dev/null > ~/.bash_history && history -c && exit" ~/.bash_logout; then
+            echo -e "${GREEN_COLOR}This function is already set.${RESET_COLOR}"
+            cleanup
+		    exit 1
+        fi
+
+        echo -e "${YELLOW_COLOR}Adding clear bash instruction on bash_logout.${RESET_COLOR}"
+        echo -e "cat /dev/null > ~/.bash_history && history -c && exit" >> ~/.bash_logout
+        echo -e "${GREEN_COLOR}All done.${RESET_COLOR}"
+		cleanup
+		exit 0;;
+
+    "uninstall" | "remove")
+        echo -e "${YELLOW_COLOR}Removing clear bash instruction on bash_logout.${RESET_COLOR}"
+        sed -i 's/cat \/dev\/null > ~\/\.bash_history && history -c && exit//g' ~/.bash_logout
+		cleanup
+		exit 0;;
+
+    * )
+        echo -e "${RED_COLOR}Invalid argument.${RESET_COLOR}"
+        echo -e "Use $0 [install | uninstall]"
+        cleanup
+        exit 1;;
+esac
